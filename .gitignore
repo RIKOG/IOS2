@@ -12,3 +12,4 @@ CTestTestfile.cmake
 .idea/vcs.xml
 CMakeLists.txt
 cmake-build-debug
+.idea/workspace.xml
