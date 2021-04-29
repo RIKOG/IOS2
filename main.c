@@ -10,9 +10,10 @@ int check_if_number(char string[]){
     int number = 0, i = 0;
     // We just check if everything in string is between 9 and 0 chars
     while(string[i] != '\0'){
+        // todo add support for +500 and -500
         if(string[i] <= '9' && string[i] >= '0'){
         } else {
-            fprintf(stderr, "One of the given arguments is not an integer!\n");
+            fprintf(stderr, "One of the given arguments is not an integer or has negative value!\n");
             return -1;
         }
         i++;
@@ -22,9 +23,10 @@ int check_if_number(char string[]){
     return number;
 }
 int main(int argc, char *argv[]) {
+    // Todo what if we get really big argument ?
     char string[1001];
     int flag_if_number = 0, arguments_values[4] = {0};
-    // We check wheter the number of arguments is correct
+    // We check whether the number of arguments is correct
     if(argc != 5){
         fprintf(stderr, "The number of arguments is incorrect!\n");
         return -1;
@@ -33,14 +35,27 @@ int main(int argc, char *argv[]) {
     for(int i = 1; i < argc; i++){
         strcpy(string, argv[i]);
         flag_if_number = check_if_number(string);
+        // The function returned -1 meaning the string wasnt holding numeric chars
         if(flag_if_number == -1){
             return -1;
         }
         arguments_values[i-1] = flag_if_number;
     }
-
-//    for(int i = 0; i < 4; i++) {
-//        printf("%d\n", arguments_values[i]);
-//    }
+    // We check whether the arguments are of the right size
+    if(
+                (arguments_values[0] >= 1000 || arguments_values[0] <= 0)
+            ||
+                (arguments_values[1] >= 20 || arguments_values[1] <= 0)
+            ||
+                (arguments_values[2] > 1000 || arguments_values[2] < 0)
+            ||
+                (arguments_values[3] > 1000 || arguments_values[3] < 0)
+            ){
+        fprintf(stderr, "The size of arguments is incorrect!\n");
+        return -1;
+    }
+    for(int i = 0; i < 4; i++) {
+        printf("%d\n", arguments_values[i]);
+    }
     return 0;
 }
