@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.16.3)
 project(IOS2 C)
 
 set(CMAKE_C_STANDARD 11)

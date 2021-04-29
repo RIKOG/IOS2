@@ -7,3 +7,8 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+.idea/deployment.xml
+.idea/discord.xml
+.idea/vcs.xml
+CMakeLists.txt
+cmake-build-debug/IOS2.exe
