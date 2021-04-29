@@ -11,4 +11,4 @@ CTestTestfile.cmake
 .idea/discord.xml
 .idea/vcs.xml
 CMakeLists.txt
-cmake-build-debug/IOS2.exe
+cmake-build-debug
