@@ -1,8 +1,19 @@
+// Richard Gajdosik, WSL Ubuntu, IDE = Clion
+// gcc 9.3
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// Richard Gajdosik, WSL Ubuntu, IDE = Clion
-// gcc 9.3
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <limits.h>
+#include <semaphore.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#define DEBUG
+#define MMAP(pointer) {(pointer) = mmap(NULL, sizeof(*(pointer)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);}
+#define mysleep(max_time) {if (max_time != 0) sleep(rand() % max_time);}
+#define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
 
 // Returns number if the given string contains a number and nothing but number chars, otherwise returns -1
 int check_if_number(char string[]){

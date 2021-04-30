@@ -14,3 +14,4 @@ CMakeLists.txt
 cmake-build-debug
 .idea/workspace.xml
 *.xml
+.idea/IOS2.iml
