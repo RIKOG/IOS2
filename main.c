@@ -15,13 +15,25 @@
 #define mysleep(max_time) {if (max_time != 0) sleep(rand() % max_time);}
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
 
+int *sdilenaprom = NULL;
+sem_t semafor;
+FILE *fp;
+void process_santa(){
+    printf("I live!");
+    exit(0);
+}
+void process_elf(int elfID){
+    printf("I elve! My ID is: %d\n", elfID);
+    exit(0);
+}
+
 // Returns number if the given string contains a number and nothing but number chars, otherwise returns -1
 int check_if_number(char string[]){
     char *ptr;
     int number = 0, i = 0;
     // We just check if everything in string is between 9 and 0 chars
     while(string[i] != '\0'){
-        // todo add support for +500 and -500
+        // todo add support for +500 and -500.. maybe even support for 5.2 decimals
         if(string[i] <= '9' && string[i] >= '0'){
         } else {
             fprintf(stderr, "One of the given arguments is not an integer or has negative value!\n");
@@ -65,8 +77,29 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "The size of arguments is incorrect!\n");
         return -1;
     }
-    for(int i = 0; i < 4; i++) {
-        printf("%d\n", arguments_values[i]);
+
+//    for(int i = 0; i < 4; i++) {
+//        printf("%d\n", arguments_values[i]);
+//    }
+
+
+    pid_t elf_generator = fork();
+    if(elf_generator == 0){
+        for(int i = 1; i < arguments_values[0]; i++){
+            printf("%d\n", i);
+            pid_t elf = fork();
+            if(elf == 0){
+                process_elf(i);
+            }
+        }
+            exit(0);
     }
+//    if(santa == 0){
+//        process_santa();
+//    }
+//    pid_t elf = fork();
+//    if(elf == 0){
+//        process_elf();
+//    }
     return 0;
 }
