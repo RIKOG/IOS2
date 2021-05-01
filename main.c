@@ -5,18 +5,23 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/sem.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <limits.h>
 #include <semaphore.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 #include <unistd.h>
 #define DEBUG
 #define MMAP(pointer) {(pointer) = mmap(NULL, sizeof(*(pointer)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);}
 #define mysleep(max_time) {if (max_time != 0) sleep(rand() % max_time);}
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
-
+//Todo poviem procesom nech sa zatvoria 
 int *sdilenaprom = NULL;
-sem_t semafor;
+sem_t *semafor;
 FILE *fp;
 void process_santa(){
     printf("I live!");
@@ -27,7 +32,19 @@ void process_elf(int elfID){
 //    while(1){}
     exit(0);
 }
-
+int init_semaphores(){
+    if((semafor = sem_open("/xgajdo33.semafor", O_CREAT | O_EXCL, 0644, 1)) == SEM_FAILED){
+        return -1;
+    }
+    return 0;
+}
+void clean_up(){
+    sem_close(semafor);
+    sem_unlink("/xgajdo33.semafor");
+    if (fclose(fp) == EOF) {
+        fprintf(stderr, "Closing of the file failed!\n");
+    }
+}
 // Returns number if the given string contains a number and nothing but number chars, otherwise returns -1
 int check_if_number(char string[]){
     char *ptr;
@@ -51,12 +68,18 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "The file failed to open!\n");
         exit(-1);
     }
+    if(init_semaphores() != 0){
+        fprintf(stderr, "Initialization of semaphores failed!\n");
+        exit(-1);
+    }
+
     // Todo what if we get really big argument ?
     char string[1001];
     int flag_if_number = 0, arguments_values[4] = {0};
     // We check whether the number of arguments is correct
     if(argc != 5){
         fprintf(stderr, "The number of arguments is incorrect!\n");
+        clean_up();
         exit(-1);
     }
     // We load and convert arguments from char arrays to integer arrays
@@ -65,6 +88,7 @@ int main(int argc, char *argv[]) {
         flag_if_number = check_if_number(string);
         // The function returned -1 meaning the string wasnt holding numeric chars
         if(flag_if_number == -1){
+            clean_up();
             return -1;
         }
         arguments_values[i-1] = flag_if_number;
@@ -80,12 +104,13 @@ int main(int argc, char *argv[]) {
                 (arguments_values[3] > 1000 || arguments_values[3] < 0)
             ){
         fprintf(stderr, "The size of arguments is incorrect!\n");
+        clean_up();
         return -1;
     }
-
-//    for(int i = 0; i < 4; i++) {
-//        printf("%d\n", arguments_values[i]);
-//    }
+// Prints out values
+    for(int i = 0; i < 4; i++) {
+        printf("%d\n", arguments_values[i]);
+    }
 
 
 //    pid_t elf_generator = fork();
@@ -106,5 +131,6 @@ int main(int argc, char *argv[]) {
 //    if(elf == 0){
 //        process_elf();
 //    }
+    clean_up();
     return 0;
 }
