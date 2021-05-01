@@ -23,7 +23,8 @@ void process_santa(){
     exit(0);
 }
 void process_elf(int elfID){
-    printf("I elve! My ID is: %d\n", elfID);
+    fprintf(fp,"I elve! My ID is: %d\n", elfID);
+//    while(1){}
     exit(0);
 }
 
@@ -46,13 +47,17 @@ int check_if_number(char string[]){
     return number;
 }
 int main(int argc, char *argv[]) {
+    if ((fp = fopen("text.txt", "w+")) == NULL) {
+        fprintf(stderr, "The file failed to open!\n");
+        exit(-1);
+    }
     // Todo what if we get really big argument ?
     char string[1001];
     int flag_if_number = 0, arguments_values[4] = {0};
     // We check whether the number of arguments is correct
     if(argc != 5){
         fprintf(stderr, "The number of arguments is incorrect!\n");
-        return -1;
+        exit(-1);
     }
     // We load and convert arguments from char arrays to integer arrays
     for(int i = 1; i < argc; i++){
@@ -83,8 +88,8 @@ int main(int argc, char *argv[]) {
 //    }
 
 
-    pid_t elf_generator = fork();
-    if(elf_generator == 0){
+//    pid_t elf_generator = fork();
+//    if(elf_generator == 0){
         for(int i = 1; i < arguments_values[0]; i++){
             printf("%d\n", i);
             pid_t elf = fork();
@@ -92,8 +97,8 @@ int main(int argc, char *argv[]) {
                 process_elf(i);
             }
         }
-            exit(0);
-    }
+//        exit(0);
+//    }
 //    if(santa == 0){
 //        process_santa();
 //    }
