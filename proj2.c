@@ -12,7 +12,8 @@
 #define MMAP(pointer) {(pointer) = mmap(NULL, sizeof(*(pointer)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);}
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
 //Todo try catch states where fork didnt get created
-//todo check if rand for reindeers works as expected
+
+// Inicialization of global variables
 int *order_of_prints = NULL;
 int *number_of_elves_waiting = NULL;
 int *number_of_reindeers_waiting = NULL;
@@ -20,66 +21,69 @@ int *reindeers_ready_flag = NULL;
 int *christmas_flag = NULL;
 int *number_of_elves_working = NULL;
 
-sem_t *semafor_elf;
-sem_t *semafor_santa;
-sem_t *semafor_reindeer;
-sem_t *semafor_writing_incrementing;
-sem_t *semafor_working_shop;
+// Inicialization of semaphores
+sem_t *semaphore_elf;
+sem_t *semaphore_santa;
+sem_t *semaphore_reindeer;
+sem_t *semaphore_writing_incrementing;
+sem_t *semaphore_working_shop;
+
+// Inicialization of file pointers
 
 FILE *fp, *random_generator;
 
 void process_santa(int number_of_elves_total, int number_of_reindeers_total) {
     while (1) {
-        sem_wait(semafor_writing_incrementing);
+        sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Santa: going to sleep\n", *order_of_prints);
         fflush(fp);
         (*order_of_prints)++;
-        sem_post(semafor_writing_incrementing);
+        sem_post(semaphore_writing_incrementing);
 
-        sem_wait(semafor_santa);
+        sem_wait(semaphore_santa);
         // All the reindeers are ready
         if ((*reindeers_ready_flag) == 1) {
-            sem_wait(semafor_writing_incrementing);
+            sem_wait(semaphore_writing_incrementing);
             fprintf(fp, "%d: Santa: closing workshop\n", *order_of_prints);
             fflush(fp);
             (*order_of_prints)++;
-            sem_post(semafor_writing_incrementing);
+            sem_post(semaphore_writing_incrementing);
             // We hitch the reindeers
             for (int i = 0; i < number_of_reindeers_total; i++) {
-                sem_post(semafor_reindeer);
+                sem_post(semaphore_reindeer);
             }
-            sem_wait(semafor_writing_incrementing);
+            sem_wait(semaphore_writing_incrementing);
             (*christmas_flag) = 1;
-            sem_post(semafor_writing_incrementing);
+            sem_post(semaphore_writing_incrementing);
             // We let the elves waiting infront of the shop to take their vacation, to make sure everything works we open the semaphore as many times as there are elves
             for (int i = 0; i < number_of_elves_total; i++) {
-                sem_post(semafor_elf);
+                sem_post(semaphore_elf);
             }
             exit(0);
         }
-        sem_wait(semafor_writing_incrementing);
+        sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Santa: helping elves\n", *order_of_prints);
         fflush(fp);
         (*order_of_prints)++;
         (*number_of_elves_waiting) -= 3;
         (*number_of_elves_working) = 3;
-        sem_post(semafor_writing_incrementing);
+        sem_post(semaphore_writing_incrementing);
 
-        sem_post(semafor_elf);
-        sem_post(semafor_elf);
-        sem_post(semafor_elf);
+        sem_post(semaphore_elf);
+        sem_post(semaphore_elf);
+        sem_post(semaphore_elf);
 
-        sem_wait(semafor_working_shop);
+        sem_wait(semaphore_working_shop);
     }
 }
 
 void process_elf(int elfID, int wait_value) {
     unsigned int random_value;
-    sem_wait(semafor_writing_incrementing);
+    sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: Elf %d: started\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
-    sem_post(semafor_writing_incrementing);
+    sem_post(semaphore_writing_incrementing);
 
     fread(&random_value, sizeof(random_value), 1, random_generator);
     // Generating random numbers
@@ -87,46 +91,46 @@ void process_elf(int elfID, int wait_value) {
         usleep(random_value % wait_value);
     }
 
-    sem_wait(semafor_writing_incrementing);
+    sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: Elf %d: need help\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
     (*number_of_elves_waiting)++;
-    sem_post(semafor_writing_incrementing);
+    sem_post(semaphore_writing_incrementing);
 
     if ((*christmas_flag) == 1) {
-        sem_wait(semafor_writing_incrementing);
+        sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Elf %d: taking holidays\n", *order_of_prints, elfID);
         fflush(fp);
         (*order_of_prints)++;
         (*number_of_elves_waiting)--;
-        sem_post(semafor_writing_incrementing);
+        sem_post(semaphore_writing_incrementing);
         exit(0);
     }
     if ((*number_of_elves_waiting) >= 3) {
-        sem_post(semafor_santa);
-        sem_wait(semafor_elf);
+        sem_post(semaphore_santa);
+        sem_wait(semaphore_elf);
     } else {
-        sem_wait(semafor_elf);
+        sem_wait(semaphore_elf);
     }
     // Solving a problem where elves were waiting in front of the shop not knowing santa left, santa tells them to take a vacation when leaving north pole
     if ((*christmas_flag) == 1) {
-        sem_wait(semafor_writing_incrementing);
+        sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Elf %d: taking holidays\n", *order_of_prints, elfID);
         fflush(fp);
         (*order_of_prints)++;
-        sem_post(semafor_writing_incrementing);
+        sem_post(semaphore_writing_incrementing);
         exit(0);
     }
-    sem_wait(semafor_writing_incrementing);
+    sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: Elf %d: get help\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
     (*number_of_elves_working)--;
-    sem_post(semafor_writing_incrementing);
+    sem_post(semaphore_writing_incrementing);
 
     if((*number_of_elves_working) == 0){
-        sem_post(semafor_working_shop);
+        sem_post(semaphore_working_shop);
     }
     exit(0);
 
@@ -134,11 +138,11 @@ void process_elf(int elfID, int wait_value) {
 
 void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_total) {
     unsigned int random_value;
-    sem_wait(semafor_writing_incrementing);
+    sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: RD %d: rstarted\n", *order_of_prints, reindeerID);
     fflush(fp);
     (*order_of_prints)++;
-    sem_post(semafor_writing_incrementing);
+    sem_post(semaphore_writing_incrementing);
 
 
     // We read random numbers until we find one that is bigger than TR/2 after applying modulo TR, thanks to which we make sure its in range of <TR/2,TR>
@@ -152,7 +156,7 @@ void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_to
     if(wait_value != 0){
         usleep(random_value % wait_value);
     }
-    sem_wait(semafor_writing_incrementing);
+    sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: RD %d: return home\n", *order_of_prints, reindeerID);
     fflush(fp);
     (*order_of_prints)++;
@@ -160,26 +164,26 @@ void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_to
     (*number_of_reindeers_waiting)++;
     if ((*number_of_reindeers_waiting) >= number_of_reindeers_total) {
         (*reindeers_ready_flag) = 1;
-        sem_post(semafor_santa);
+        sem_post(semaphore_santa);
     }
-    sem_post(semafor_writing_incrementing);
+    sem_post(semaphore_writing_incrementing);
 
-    sem_wait(semafor_reindeer);
+    sem_wait(semaphore_reindeer);
 
 
-    sem_wait(semafor_writing_incrementing);
+    sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: RD %d: get hitched\n", *order_of_prints, reindeerID);
     fflush(fp);
     (*order_of_prints)++;
     (*number_of_reindeers_waiting)--;
-    sem_post(semafor_writing_incrementing);
+    sem_post(semaphore_writing_incrementing);
 
     if((*number_of_reindeers_waiting) == 0){
-        sem_wait(semafor_writing_incrementing);
+        sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Santa: Christmas started\n", *order_of_prints);
         fflush(fp);
         (*order_of_prints)++;
-        sem_post(semafor_writing_incrementing);
+        sem_post(semaphore_writing_incrementing);
     }
     exit(0);
 }
@@ -192,11 +196,11 @@ int init_semaphores() {
     MMAP(christmas_flag);
     MMAP(number_of_elves_working);
 
-    sem_unlink("/xgajdo33.semafor_elf");
+    sem_unlink("/xgajdo33.semaphore_elf");
     sem_unlink("/xgajdo33.semafor_santa");
-    sem_unlink("/xgajdo33.semafor_reindeer");
-    sem_unlink("/xgajdo33.semafor_writing_incrementing");
-    sem_unlink("/xgajdo33.semafor_working_shop");
+    sem_unlink("/xgajdo33.semaphore_reindeer");
+    sem_unlink("/xgajdo33.semaphore_writing_incrementing");
+    sem_unlink("/xgajdo33.semaphore_working_shop");
     if ((fp = fopen("proj2.out", "w+")) == NULL) {
         fprintf(stderr, "The file failed to open!\n");
         exit(-1);
@@ -205,19 +209,19 @@ int init_semaphores() {
         fprintf(stderr, "The file failed to open!\n");
         exit(-1);
     }
-    if ((semafor_elf = sem_open("/xgajdo33.semafor_elf", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
+    if ((semaphore_elf = sem_open("/xgajdo33.semaphore_elf", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
-    if ((semafor_santa = sem_open("/xgajdo33.semafor_santa", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
+    if ((semaphore_santa = sem_open("/xgajdo33.semafor_santa", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
-    if ((semafor_reindeer = sem_open("/xgajdo33.semafor_reindeer", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
+    if ((semaphore_reindeer = sem_open("/xgajdo33.semaphore_reindeer", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
-    if ((semafor_writing_incrementing = sem_open("/xgajdo33.semafor_writing_incrementing", O_CREAT | O_EXCL, 0644, 1)) == SEM_FAILED) {
+    if ((semaphore_writing_incrementing = sem_open("/xgajdo33.semaphore_writing_incrementing", O_CREAT | O_EXCL, 0644, 1)) == SEM_FAILED) {
         return -1;
     }
-    if ((semafor_working_shop = sem_open("/xgajdo33.semafor_working_shop", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
+    if ((semaphore_working_shop = sem_open("/xgajdo33.semaphore_working_shop", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
     return 0;
@@ -230,16 +234,16 @@ void clean_up() {
     UNMAP(reindeers_ready_flag);
     UNMAP(christmas_flag);
     UNMAP(number_of_elves_working);
-    sem_close(semafor_elf);
-    sem_close(semafor_santa);
-    sem_close(semafor_reindeer);
-    sem_close(semafor_writing_incrementing);
-    sem_close(semafor_working_shop);
-    sem_unlink("/xgajdo33.semafor_elf");
+    sem_close(semaphore_elf);
+    sem_close(semaphore_santa);
+    sem_close(semaphore_reindeer);
+    sem_close(semaphore_writing_incrementing);
+    sem_close(semaphore_working_shop);
+    sem_unlink("/xgajdo33.semaphore_elf");
     sem_unlink("/xgajdo33.semafor_santa");
-    sem_unlink("/xgajdo33.semafor_reindeer");
-    sem_unlink("/xgajdo33.semafor_writing_incrementing");
-    sem_unlink("/xgajdo33.semafor_working_shop");
+    sem_unlink("/xgajdo33.semaphore_reindeer");
+    sem_unlink("/xgajdo33.semaphore_writing_incrementing");
+    sem_unlink("/xgajdo33.semaphore_working_shop");
 
 
     if (fclose(fp) == EOF) {
@@ -254,7 +258,7 @@ void clean_up() {
 int check_if_number(char string[]) {
     char *ptr;
     int number = 0, i = 0;
-    // We just check if everything in string is between 9 and 0 chars
+    // We just check if everything in string is between 9 and 0 chars and in scope of size of our char array
     while (string[i] != '\0') {
         if ((string[i] <= '9' && string[i] >= '0') || i == 1000) {
         } else {
@@ -273,6 +277,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Initialization of semaphores failed!\n");
         exit(-1);
     }
+    // We just arbitrary increment order of prints because we dont want the printing start at 0 but at 1
     (*order_of_prints)++;
     char string[1001];
     int flag_if_number = 0, arguments_values[4] = {0};
@@ -307,34 +312,35 @@ int main(int argc, char *argv[]) {
         clean_up();
         return -1;
     }
-// Prints out values
-//    for (int i = 0; i < 4; i++) {
-//        printf("%d\n", arguments_values[i]);
-//    }
-
+    // We create process Santa
     pid_t santa = fork();
     if (santa == 0) {
         process_santa(arguments_values[0], arguments_values[1]);
     }
+    // We create a process that starts creating elve processes
     pid_t elve_generator = fork();
     if (elve_generator == 0) {
+        // Creating elve processes in a for loop
         for (int i = 1; i <= arguments_values[0]; i++) {
-//            printf("%d\n", i);
             pid_t elf = fork();
             if (elf == 0) {
                 process_elf(i, arguments_values[2]);
             }
         }
+        // Telling a process generating another processes to end
         exit(0);
     }
+    // We create a process that starts creating reindeer processes
     pid_t reindeer_generator = fork();
     if (reindeer_generator == 0) {
+        // Creating reindeer processes in a for loop
         for (int i = 1; i <= arguments_values[1]; i++) {
             pid_t reindeer = fork();
             if (reindeer == 0) {
                 process_reindeer(i, arguments_values[3], arguments_values[1]);
             }
         }
+        // Telling a process generating another processes to end
         exit(0);
     }
 
@@ -343,6 +349,7 @@ int main(int argc, char *argv[]) {
     do {
         IDs = wait(NULL);
     } while (IDs != -1);
+    // Unlinking and closing everything
     clean_up();
     return 0;
 }
