@@ -13,6 +13,7 @@
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
 //Todo poviem procesom nech sa zatvoria
 //Todo try catch states where fork didnt get created
+//todo check if rand for reindeers works as expected
 int *order_of_prints = NULL;
 int *number_of_elves_waiting = NULL;
 int *number_of_reindeers_waiting = NULL;
@@ -51,7 +52,7 @@ void process_santa(int number_of_elves_total, int number_of_reindeers_total) {
             sem_wait(semafor_writing_incrementing);
             (*christmas_flag) = 1;
             sem_post(semafor_writing_incrementing);
-            // We let the elves waiting infront of the shop to take their vacation
+            // We let the elves waiting infront of the shop to take their vacation, to make sure everything works we open the semaphore as many times as there are elves
             for (int i = 0; i < number_of_elves_total; i++) {
                 sem_post(semafor_elf);
             }
@@ -85,26 +86,26 @@ void process_elf(int elfID, int wait_value) {
     // Generating random numbers
     usleep(random_value % wait_value);
 
-    if ((*christmas_flag) == 1) {
-        sem_wait(semafor_writing_incrementing);
-        fprintf(fp, "%d: Elf %d: taking holidays\n", *order_of_prints, elfID);
-        fflush(fp);
-        (*order_of_prints)++;
-        sem_post(semafor_writing_incrementing);
-        exit(0);
-    }
-
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: Elf %d: need help\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
     (*number_of_elves_waiting)++;
-    if ((*number_of_elves_waiting) >= 3) {
+    sem_post(semafor_writing_incrementing);
+
+    if ((*christmas_flag) == 1) {
+        sem_wait(semafor_writing_incrementing);
+        fprintf(fp, "%d: Elf %d: taking holidays\n", *order_of_prints, elfID);
+        fflush(fp);
+        (*order_of_prints)++;
+        (*number_of_elves_waiting)--;
         sem_post(semafor_writing_incrementing);
+        exit(0);
+    }
+    if ((*number_of_elves_waiting) >= 3) {
         sem_post(semafor_santa);
         sem_wait(semafor_elf);
     } else {
-        sem_post(semafor_writing_incrementing);
         sem_wait(semafor_elf);
     }
     // Solving a problem where elves were waiting in front of the shop not knowing santa left, santa tells them to take a vacation when leaving north pole
