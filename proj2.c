@@ -195,12 +195,13 @@ int init_semaphores() {
     MMAP(reindeers_ready_flag);
     MMAP(christmas_flag);
     MMAP(number_of_elves_working);
-
+    // In case we crashed last time
     sem_unlink("/xgajdo33.semaphore_elf");
-    sem_unlink("/xgajdo33.semafor_santa");
+    sem_unlink("/xgajdo33.semaphore_santa");
     sem_unlink("/xgajdo33.semaphore_reindeer");
     sem_unlink("/xgajdo33.semaphore_writing_incrementing");
     sem_unlink("/xgajdo33.semaphore_working_shop");
+
     if ((fp = fopen("proj2.out", "w+")) == NULL) {
         fprintf(stderr, "The file failed to open!\n");
         exit(-1);
@@ -212,7 +213,7 @@ int init_semaphores() {
     if ((semaphore_elf = sem_open("/xgajdo33.semaphore_elf", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
-    if ((semaphore_santa = sem_open("/xgajdo33.semafor_santa", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
+    if ((semaphore_santa = sem_open("/xgajdo33.semaphore_santa", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
     if ((semaphore_reindeer = sem_open("/xgajdo33.semaphore_reindeer", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
@@ -234,17 +235,18 @@ void clean_up() {
     UNMAP(reindeers_ready_flag);
     UNMAP(christmas_flag);
     UNMAP(number_of_elves_working);
+
     sem_close(semaphore_elf);
     sem_close(semaphore_santa);
     sem_close(semaphore_reindeer);
     sem_close(semaphore_writing_incrementing);
     sem_close(semaphore_working_shop);
+
     sem_unlink("/xgajdo33.semaphore_elf");
-    sem_unlink("/xgajdo33.semafor_santa");
+    sem_unlink("/xgajdo33.semaphore_santa");
     sem_unlink("/xgajdo33.semaphore_reindeer");
     sem_unlink("/xgajdo33.semaphore_writing_incrementing");
     sem_unlink("/xgajdo33.semaphore_working_shop");
-
 
     if (fclose(fp) == EOF) {
         fprintf(stderr, "Closing of the file failed!\n");
