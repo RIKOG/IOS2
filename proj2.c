@@ -14,6 +14,8 @@
 //Todo poviem procesom nech sa zatvoria
 //Todo try catch states where fork didnt get created
 //todo check if rand for reindeers works as expected
+//todo delete printf
+//todo delenie nulov
 int *order_of_prints = NULL;
 int *number_of_elves_waiting = NULL;
 int *number_of_reindeers_waiting = NULL;
@@ -84,7 +86,9 @@ void process_elf(int elfID, int wait_value) {
 
     fread(&random_value, sizeof(random_value), 1, random_generator);
     // Generating random numbers
-    usleep(random_value % wait_value);
+    if(wait_value != 0){
+        usleep(random_value % wait_value);
+    }
 
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: Elf %d: need help\n", *order_of_prints, elfID);
@@ -142,8 +146,9 @@ void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_to
     fread(&random_value, sizeof(random_value), 1, random_generator);
 
     // Generating numbers from range of (upperval - lowerval+1) + lowerval
-    usleep(random_value % (wait_value - (wait_value / 2 + 1)) + wait_value / 2);
-
+    if(wait_value != 0){
+        usleep(random_value % (wait_value - (wait_value / 2 + 1)) + wait_value / 2);
+    }
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: RD %d: return home\n", *order_of_prints, reindeerID);
     fflush(fp);
@@ -189,7 +194,7 @@ int init_semaphores() {
     sem_unlink("/xgajdo33.semafor_reindeer");
     sem_unlink("/xgajdo33.semafor_writing_incrementing");
     sem_unlink("/xgajdo33.semafor_working_shop");
-    if ((fp = fopen("text.txt", "w+")) == NULL) {
+    if ((fp = fopen("proj2.out", "w+")) == NULL) {
         fprintf(stderr, "The file failed to open!\n");
         exit(-1);
     }
@@ -298,9 +303,9 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 // Prints out values
-    for (int i = 0; i < 4; i++) {
-        printf("%d\n", arguments_values[i]);
-    }
+//    for (int i = 0; i < 4; i++) {
+//        printf("%d\n", arguments_values[i]);
+//    }
 
     pid_t santa = fork();
     if (santa == 0) {
@@ -309,7 +314,7 @@ int main(int argc, char *argv[]) {
     pid_t elve_generator = fork();
     if (elve_generator == 0) {
         for (int i = 1; i <= arguments_values[0]; i++) {
-            printf("%d\n", i);
+//            printf("%d\n", i);
             pid_t elf = fork();
             if (elf == 0) {
                 process_elf(i, arguments_values[2]);
