@@ -15,6 +15,8 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <time.h>
+
 
 #define max_time 1000
 #define DEBUG
@@ -23,15 +25,13 @@
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
 //Todo poviem procesom nech sa zatvoria
 
-//todo pridat writing semafor
 int *order_of_prints = NULL;
 sem_t *semafor_elf;
 sem_t *semafor_santa;
 sem_t *semafor_santa_end;
 sem_t *semafor_writing_incrementing;
 //todo TRYWAIT CATCH ENDING FOR SANTA THROUGH THAT
-
-FILE *fp;
+FILE *fp, *random_generator;
 
 void process_santa() {
     while (1) {
@@ -51,30 +51,44 @@ void process_santa() {
         sem_post(semafor_elf);
         sem_post(semafor_elf);
         sem_post(semafor_elf);
+        // TODO .another semaphore for this. Wait while elves get help
+//        sem_wait(semafor_santa);
+//        sem_wait(semafor_santa);
+//        sem_wait(semafor_santa);
+
     }
     exit(0);
 }
 
 void process_elf(int elfID) {
+    unsigned int random_value;
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: Elf %d: started\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
     sem_post(semafor_writing_incrementing);
-        sem_wait(semafor_writing_incrementing);
+
+    sem_wait(semafor_writing_incrementing);
+    fread(&random_value, sizeof(random_value), 1, random_generator);
+//    usleep(random_value % 1000);
+    fprintf(fp, "%d\n", random_value % 1000);
+    fflush(fp);
+    sem_post(semafor_writing_incrementing);
+
+    sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: Elf %d: need help\n", *order_of_prints, elfID);
     fflush(fp);
-
     (*order_of_prints)++;
-        sem_post(semafor_writing_incrementing);
+    sem_post(semafor_writing_incrementing);
 
     sem_wait(semafor_elf);
 
-        sem_wait(semafor_writing_incrementing);
+    sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: Elf %d: get help\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
-        sem_post(semafor_writing_incrementing);
+    sem_post(semafor_writing_incrementing);
+
     exit(0);
 
 }
@@ -85,7 +99,14 @@ int init_semaphores() {
     sem_unlink("/xgajdo33.semafor_santa");
     sem_unlink("/xgajdo33.semafor_santa_end");
     sem_unlink("/xgajdo33.semafor_writing_incrementing");
-
+    if ((fp = fopen("text.txt", "w+")) == NULL) {
+        fprintf(stderr, "The file failed to open!\n");
+        exit(-1);
+    }
+    if ((random_generator = fopen("/dev/random", "r")) == NULL) {
+        fprintf(stderr, "The file failed to open!\n");
+        exit(-1);
+    }
     if ((semafor_elf = sem_open("/xgajdo33.semafor_elf", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
@@ -114,6 +135,9 @@ void clean_up() {
     if (fclose(fp) == EOF) {
         fprintf(stderr, "Closing of the file failed!\n");
     }
+    if (fclose(random_generator) == EOF) {
+        fprintf(stderr, "Closing of the file failed!\n");
+    }
 }
 
 // Returns number if the given string contains a number and nothing but number chars, otherwise returns -1
@@ -134,11 +158,8 @@ int check_if_number(char string[]) {
     number = strtol(string, &ptr, 0);
     return number;
 }
+
 int main(int argc, char *argv[]) {
-    if ((fp = fopen("text.txt", "w+")) == NULL) {
-        fprintf(stderr, "The file failed to open!\n");
-        exit(-1);
-    }
     if (init_semaphores() != 0) {
         fprintf(stderr, "Initialization of semaphores failed!\n");
         exit(-1);
@@ -189,12 +210,12 @@ int main(int argc, char *argv[]) {
     }
     for (int i = 1; i < arguments_values[0]; i++) {
         printf("%d\n", i);
-            if(i%4 == 0){
-                sem_post(semafor_santa);
+        if (i % 4 == 0) {
+            sem_post(semafor_santa);
 //                sem_post(semafor_elf);
 //                sem_post(semafor_elf);
 //                sem_post(semafor_elf);
-            }
+        }
         pid_t elf = fork();
         if (elf == 0) {
             process_elf(i);
