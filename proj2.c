@@ -34,24 +34,29 @@ FILE *fp, *random_generator;
 
 void process_santa(int number_of_elves_total, int number_of_reindeers_total) {
     while (1) {
+        // Santa got initialized we tell the .out text we are starting to sleep
         sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Santa: going to sleep\n", *order_of_prints);
         fflush(fp);
         (*order_of_prints)++;
         sem_post(semaphore_writing_incrementing);
 
+        // Waiting for reindeers or elves to wake me up
         sem_wait(semaphore_santa);
-        // All the reindeers are ready
+        // All the reindeers are back from vacation
         if ((*reindeers_ready_flag) == 1) {
+
             sem_wait(semaphore_writing_incrementing);
             fprintf(fp, "%d: Santa: closing workshop\n", *order_of_prints);
             fflush(fp);
             (*order_of_prints)++;
             sem_post(semaphore_writing_incrementing);
+
             // We hitch the reindeers
             for (int i = 0; i < number_of_reindeers_total; i++) {
                 sem_post(semaphore_reindeer);
             }
+            // We set global flag to 1 telling rest of the program santa wont be helping at the shop
             sem_wait(semaphore_writing_incrementing);
             (*christmas_flag) = 1;
             sem_post(semaphore_writing_incrementing);
@@ -61,24 +66,27 @@ void process_santa(int number_of_elves_total, int number_of_reindeers_total) {
             }
             exit(0);
         }
+        // Otherwise we got woken up by elves, we start helping...
         sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Santa: helping elves\n", *order_of_prints);
         fflush(fp);
         (*order_of_prints)++;
         (*number_of_elves_waiting) -= 3;
+        // Global flag variable that counts down when we helped elve, elve process decrements it
         (*number_of_elves_working) = 3;
         sem_post(semaphore_writing_incrementing);
-
+        // Tell 3 elve to start working
         sem_post(semaphore_elf);
         sem_post(semaphore_elf);
         sem_post(semaphore_elf);
-
+        // Waiting until all of the 3 elves got help from santa, elves decrement (*number_of_elves_working) and if elve finds out he is a third one, he sends Santa from shop to bed
         sem_wait(semaphore_working_shop);
     }
 }
 
 void process_elf(int elfID, int wait_value) {
     unsigned int random_value;
+    // Elve got initialized
     sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: Elf %d: started\n", *order_of_prints, elfID);
     fflush(fp);
@@ -91,6 +99,7 @@ void process_elf(int elfID, int wait_value) {
         usleep(random_value % wait_value);
     }
 
+    // Elve screams as he is left alone in front of the shop
     sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: Elf %d: need help\n", *order_of_prints, elfID);
     fflush(fp);
@@ -98,6 +107,7 @@ void process_elf(int elfID, int wait_value) {
     (*number_of_elves_waiting)++;
     sem_post(semaphore_writing_incrementing);
 
+    // ... then he founds out its closed for now, and hes feeling like an idiot, going to work at holidays pff!
     if ((*christmas_flag) == 1) {
         sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Elf %d: taking holidays\n", *order_of_prints, elfID);
@@ -107,6 +117,8 @@ void process_elf(int elfID, int wait_value) {
         sem_post(semaphore_writing_incrementing);
         exit(0);
     }
+
+    // But if elve comes up to the shop and finds out he is a third one, he goes and wakes up santa to help them
     if ((*number_of_elves_waiting) >= 3) {
         sem_post(semaphore_santa);
         sem_wait(semaphore_elf);
@@ -122,22 +134,24 @@ void process_elf(int elfID, int wait_value) {
         sem_post(semaphore_writing_incrementing);
         exit(0);
     }
+    // Elve got told he is getting a help through semaphore from santa, is working and getting helped, also he counts himself out as he finishes
     sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: Elf %d: get help\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
     (*number_of_elves_working)--;
     sem_post(semaphore_writing_incrementing);
-
+    // He finds out hes the last one leaving shop, tells santa to go to sleep
     if((*number_of_elves_working) == 0){
         sem_post(semaphore_working_shop);
     }
     exit(0);
-
 }
 
 void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_total) {
     unsigned int random_value;
+
+    // Reindeer got initialized
     sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: RD %d: rstarted\n", *order_of_prints, reindeerID);
     fflush(fp);
@@ -156,21 +170,23 @@ void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_to
     if(wait_value != 0){
         usleep(random_value % wait_value);
     }
+    // He goes do whatever in a forest waiting for his brothers and sisters
     sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: RD %d: return home\n", *order_of_prints, reindeerID);
     fflush(fp);
     (*order_of_prints)++;
-
+    // Counts himself in
     (*number_of_reindeers_waiting)++;
+    // If he finds out he is the last one everyone was waiting for, sets ready flag and wakes up santa, santa then closes shop and christmas starts!
     if ((*number_of_reindeers_waiting) >= number_of_reindeers_total) {
         (*reindeers_ready_flag) = 1;
         sem_post(semaphore_santa);
     }
     sem_post(semaphore_writing_incrementing);
-
+    // Otherwise waits with others for santas hitching
     sem_wait(semaphore_reindeer);
 
-
+    // Santa started hitching
     sem_wait(semaphore_writing_incrementing);
     fprintf(fp, "%d: RD %d: get hitched\n", *order_of_prints, reindeerID);
     fflush(fp);
@@ -178,6 +194,7 @@ void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_to
     (*number_of_reindeers_waiting)--;
     sem_post(semaphore_writing_incrementing);
 
+    // If he is the last one to get hitched, he impersonates santa and screams for him the christmas started!
     if((*number_of_reindeers_waiting) == 0){
         sem_wait(semaphore_writing_incrementing);
         fprintf(fp, "%d: Santa: Christmas started\n", *order_of_prints);
