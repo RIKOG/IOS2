@@ -24,60 +24,63 @@
 //Todo poviem procesom nech sa zatvoria
 
 //todo pridat writing semafor
-int *sdilenaprom = NULL;
+int *order_of_prints = NULL;
 sem_t *semafor_elf;
 sem_t *semafor_santa;
 sem_t *semafor_santa_end;
 sem_t *semafor_writing_incrementing;
-// TRYWAIT CATCH ENDING FOR SANTA THROUGH THAT
+//todo TRYWAIT CATCH ENDING FOR SANTA THROUGH THAT
 
 FILE *fp;
 
 void process_santa() {
     while (1) {
-//        sem_wait(semafor_writing_incrementing);
-//        fprintf(fp, "%d: Santa: going to sleep\n", *sdilenaprom);
-//        (*sdilenaprom)++;
-//        sem_post(semafor_writing_incrementing);
+        sem_wait(semafor_writing_incrementing);
+        fprintf(fp, "%d: Santa: going to sleep\n", *order_of_prints);
+        fflush(fp);
+        (*order_of_prints)++;
+        sem_post(semafor_writing_incrementing);
 
-//        sem_wait(semafor_santa);
+        sem_wait(semafor_santa);
 
-//        sem_wait(semafor_writing_incrementing);
-//        fprintf(fp, "%d: Santa: helping elves\n", *sdilenaprom);
-//        (*sdilenaprom)++;
-//        sem_post(semafor_writing_incrementing);
+        sem_wait(semafor_writing_incrementing);
+        fprintf(fp, "%d: Santa: helping elves\n", *order_of_prints);
+        (*order_of_prints)++;
+        sem_post(semafor_writing_incrementing);
 
-//        sem_post(semafor_elf);
-//        sem_post(semafor_elf);
-//        sem_post(semafor_elf);
-        exit(0);
+        sem_post(semafor_elf);
+        sem_post(semafor_elf);
+        sem_post(semafor_elf);
     }
+    exit(0);
 }
 
 void process_elf(int elfID) {
-
-    while (1) {
+    sem_wait(semafor_writing_incrementing);
+    fprintf(fp, "%d: Elf %d: started\n", *order_of_prints, elfID);
+    fflush(fp);
+    (*order_of_prints)++;
+    sem_post(semafor_writing_incrementing);
         sem_wait(semafor_writing_incrementing);
-        fprintf(fp, "%d: Elf %d: started\n", *sdilenaprom, elfID);
-        (*sdilenaprom)++;
+    fprintf(fp, "%d: Elf %d: need help\n", *order_of_prints, elfID);
+    fflush(fp);
+
+    (*order_of_prints)++;
         sem_post(semafor_writing_incrementing);
-//        sem_wait(semafor_writing_incrementing);
-        fprintf(fp, "%d: Elf %d: need help\n", *sdilenaprom, elfID);
-        (*sdilenaprom)++;
-//        sem_post(semafor_writing_incrementing);
 
-        sem_wait(semafor_elf);
+    sem_wait(semafor_elf);
 
-//        sem_wait(semafor_writing_incrementing);
-        fprintf(fp, "%d: Elf %d: get help\n", *sdilenaprom, elfID);
-        (*sdilenaprom)++;
-//        sem_post(semafor_writing_incrementing);
-        exit(0);
-    }
+        sem_wait(semafor_writing_incrementing);
+    fprintf(fp, "%d: Elf %d: get help\n", *order_of_prints, elfID);
+    fflush(fp);
+    (*order_of_prints)++;
+        sem_post(semafor_writing_incrementing);
+    exit(0);
+
 }
 
 int init_semaphores() {
-    MMAP(sdilenaprom);
+    MMAP(order_of_prints);
     sem_unlink("/xgajdo33.semafor_elf");
     sem_unlink("/xgajdo33.semafor_santa");
     sem_unlink("/xgajdo33.semafor_santa_end");
@@ -100,7 +103,7 @@ int init_semaphores() {
 }
 
 void clean_up() {
-    UNMAP(sdilenaprom);
+    UNMAP(order_of_prints);
     sem_close(semafor_elf);
     sem_unlink("/xgajdo33.semafor_elf");
     sem_unlink("/xgajdo33.semafor_santa");
@@ -131,7 +134,6 @@ int check_if_number(char string[]) {
     number = strtol(string, &ptr, 0);
     return number;
 }
-
 int main(int argc, char *argv[]) {
     if ((fp = fopen("text.txt", "w+")) == NULL) {
         fprintf(stderr, "The file failed to open!\n");
@@ -141,6 +143,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Initialization of semaphores failed!\n");
         exit(-1);
     }
+    (*order_of_prints)++;
     // Todo what if we get really big argument ?
     char string[1001];
     int flag_if_number = 0, arguments_values[4] = {0};
@@ -180,25 +183,23 @@ int main(int argc, char *argv[]) {
         printf("%d\n", arguments_values[i]);
     }
 
-//    pid_t santa = fork();
-//    if (santa == 0) {
-//        process_santa();
-//    }
+    pid_t santa = fork();
+    if (santa == 0) {
+        process_santa();
+    }
     for (int i = 1; i < arguments_values[0]; i++) {
         printf("%d\n", i);
-//            if(i%3 == 0){
+            if(i%4 == 0){
+                sem_post(semafor_santa);
 //                sem_post(semafor_elf);
 //                sem_post(semafor_elf);
 //                sem_post(semafor_elf);
-//            }
+            }
         pid_t elf = fork();
         if (elf == 0) {
             process_elf(i);
         }
-//            sem_post(semafor_elf);
     }
-    sem_post(semafor_elf);
-
     clean_up();
     return 0;
 }
