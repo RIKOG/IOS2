@@ -71,10 +71,14 @@ void process_santa(int number_of_elves_total, int number_of_reindeers_total) {
         fflush(fp);
         (*order_of_prints)++;
         (*number_of_elves_waiting) -= 3;
+        (*number_of_elves_working) = 3;
         sem_post(semafor_writing_incrementing);
+
         sem_post(semafor_elf);
         sem_post(semafor_elf);
         sem_post(semafor_elf);
+
+        sem_wait(semafor_working_shop);
     }
 }
 
@@ -125,8 +129,12 @@ void process_elf(int elfID, int wait_value) {
     fprintf(fp, "%d: Elf %d: get help\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
+    (*number_of_elves_working)--;
     sem_post(semafor_writing_incrementing);
 
+    if((*number_of_elves_working) == 0){
+        sem_post(semafor_working_shop);
+    }
     exit(0);
 
 }
@@ -188,6 +196,7 @@ int init_semaphores() {
     sem_unlink("/xgajdo33.semafor_santa");
     sem_unlink("/xgajdo33.semafor_reindeer");
     sem_unlink("/xgajdo33.semafor_writing_incrementing");
+    sem_unlink("/xgajdo33.semafor_working_shop");
     if ((fp = fopen("text.txt", "w+")) == NULL) {
         fprintf(stderr, "The file failed to open!\n");
         exit(-1);
@@ -205,8 +214,10 @@ int init_semaphores() {
     if ((semafor_reindeer = sem_open("/xgajdo33.semafor_reindeer", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
-    if ((semafor_writing_incrementing = sem_open("/xgajdo33.semafor_writing_incrementing", O_CREAT | O_EXCL, 0644,
-                                                 1)) == SEM_FAILED) {
+    if ((semafor_writing_incrementing = sem_open("/xgajdo33.semafor_writing_incrementing", O_CREAT | O_EXCL, 0644, 1)) == SEM_FAILED) {
+        return -1;
+    }
+    if ((semafor_working_shop = sem_open("/xgajdo33.semafor_working_shop", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
     return 0;
