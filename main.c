@@ -18,22 +18,23 @@
 #include <time.h>
 
 
-#define max_time 1000
-#define DEBUG
 #define MMAP(pointer) {(pointer) = mmap(NULL, sizeof(*(pointer)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);}
-#define mysleep(max_time) {if (max_time != 0) sleep(rand() % max_time);}
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
 //Todo poviem procesom nech sa zatvoria
+//Todo try catch states where fork didnt get created
 
 int *order_of_prints = NULL;
+int *number_of_elves_waiting = NULL;
+int *number_of_reindeers_waiting = NULL;
+int *reindeers_ready_flag = NULL;
+int *christmas_flag = NULL;
 sem_t *semafor_elf;
 sem_t *semafor_santa;
-sem_t *semafor_santa_end;
+sem_t *semafor_reindeer;
 sem_t *semafor_writing_incrementing;
-//todo TRYWAIT CATCH ENDING FOR SANTA THROUGH THAT
 FILE *fp, *random_generator;
 
-void process_santa() {
+void process_santa(int number_of_reindeers_total) {
     while (1) {
         sem_wait(semafor_writing_incrementing);
         fprintf(fp, "%d: Santa: going to sleep\n", *order_of_prints);
@@ -42,25 +43,34 @@ void process_santa() {
         sem_post(semafor_writing_incrementing);
 
         sem_wait(semafor_santa);
-
+        // All the reindeers are ready
+        if((*reindeers_ready_flag) == 1){
+            // We hitch the reindeers
+            for(int i = 0; i < number_of_reindeers_total; i++){
+                sem_post(semafor_reindeer);
+            }
+            sem_wait(semafor_writing_incrementing);
+            (*christmas_flag) = 1;
+            fprintf(fp, "%d: Santa: Christmas started\n", *order_of_prints);
+            fflush(fp);
+            (*order_of_prints)++;
+            sem_post(semafor_writing_incrementing);
+            exit(0);
+        }
         sem_wait(semafor_writing_incrementing);
         fprintf(fp, "%d: Santa: helping elves\n", *order_of_prints);
+        fflush(fp);
         (*order_of_prints)++;
+        (*number_of_elves_waiting)-=3;
         sem_post(semafor_writing_incrementing);
 
         sem_post(semafor_elf);
         sem_post(semafor_elf);
         sem_post(semafor_elf);
-        // TODO .another semaphore for this. Wait while elves get help
-//        sem_wait(semafor_santa);
-//        sem_wait(semafor_santa);
-//        sem_wait(semafor_santa);
-
     }
-    exit(0);
 }
 
-void process_elf(int elfID) {
+void process_elf(int elfID, int wait_value) {
     unsigned int random_value;
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: Elf %d: started\n", *order_of_prints, elfID);
@@ -68,21 +78,32 @@ void process_elf(int elfID) {
     (*order_of_prints)++;
     sem_post(semafor_writing_incrementing);
 
-    sem_wait(semafor_writing_incrementing);
     fread(&random_value, sizeof(random_value), 1, random_generator);
-//    usleep(random_value % 1000);
-    fprintf(fp, "%d\n", random_value % 1000);
-    fflush(fp);
-    sem_post(semafor_writing_incrementing);
+    usleep(random_value % wait_value);
+
+    if((*christmas_flag) == 1){
+        sem_wait(semafor_writing_incrementing);
+        fprintf(fp, "%d: Elf %d: taking holidays\n", *order_of_prints, elfID);
+        fflush(fp);
+        (*order_of_prints)++;
+        sem_post(semafor_writing_incrementing);
+        exit(0);
+    }
 
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: Elf %d: need help\n", *order_of_prints, elfID);
     fflush(fp);
     (*order_of_prints)++;
-    sem_post(semafor_writing_incrementing);
-
-    sem_wait(semafor_elf);
-
+    (*number_of_elves_waiting)++;
+    // Todo uvolnujem troch elfov ale nedaval som ho do poradia ? blbost
+    if((*number_of_elves_waiting) >= 3){
+        sem_post(semafor_writing_incrementing);
+        sem_post(semafor_santa);
+        sem_wait(semafor_elf);
+    } else {
+        sem_post(semafor_writing_incrementing);
+        sem_wait(semafor_elf);
+    }
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: Elf %d: get help\n", *order_of_prints, elfID);
     fflush(fp);
@@ -93,11 +114,48 @@ void process_elf(int elfID) {
 
 }
 
+void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_total){
+    unsigned int random_value;
+    sem_wait(semafor_writing_incrementing);
+    fprintf(fp, "%d: RD %d: rstarted\n", *order_of_prints, reindeerID);
+    fflush(fp);
+    (*order_of_prints)++;
+    sem_post(semafor_writing_incrementing);
+
+    fread(&random_value, sizeof(random_value), 1, random_generator);
+
+    // Generating numbers from range of (upperval - lowerval+1) + lowerval
+    usleep(random_value % (wait_value - (wait_value/2+1))+wait_value/2);
+
+    sem_wait(semafor_writing_incrementing);
+    (*number_of_reindeers_waiting)++;
+    if((*number_of_reindeers_waiting) >= number_of_reindeers_total){
+        (*reindeers_ready_flag) = 1;
+        sem_post(semafor_santa);
+    }
+    sem_post(semafor_writing_incrementing);
+
+    sem_wait(semafor_reindeer);
+
+    sem_wait(semafor_writing_incrementing);
+    fprintf(fp, "%d: RD %d: get hitched\n", *order_of_prints, reindeerID);
+    fflush(fp);
+    (*order_of_prints)++;
+    (*number_of_reindeers_waiting)++;
+    sem_post(semafor_writing_incrementing);
+    exit(0);
+}
+
 int init_semaphores() {
     MMAP(order_of_prints);
+    MMAP(number_of_elves_waiting);
+    MMAP(number_of_reindeers_waiting);
+    MMAP(reindeers_ready_flag);
+    MMAP(christmas_flag);
+
     sem_unlink("/xgajdo33.semafor_elf");
     sem_unlink("/xgajdo33.semafor_santa");
-    sem_unlink("/xgajdo33.semafor_santa_end");
+    sem_unlink("/xgajdo33.semafor_reindeer");
     sem_unlink("/xgajdo33.semafor_writing_incrementing");
     if ((fp = fopen("text.txt", "w+")) == NULL) {
         fprintf(stderr, "The file failed to open!\n");
@@ -113,7 +171,7 @@ int init_semaphores() {
     if ((semafor_santa = sem_open("/xgajdo33.semafor_santa", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
-    if ((semafor_santa_end = sem_open("/xgajdo33.semafor_santa_end", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
+    if ((semafor_reindeer = sem_open("/xgajdo33.semafor_reindeer", O_CREAT | O_EXCL, 0644, 0)) == SEM_FAILED) {
         return -1;
     }
     if ((semafor_writing_incrementing = sem_open("/xgajdo33.semafor_writing_incrementing", O_CREAT | O_EXCL, 0644,
@@ -125,10 +183,15 @@ int init_semaphores() {
 
 void clean_up() {
     UNMAP(order_of_prints);
+    UNMAP(number_of_elves_waiting);
+    UNMAP(number_of_reindeers_waiting);
+    UNMAP(reindeers_ready_flag);
+    UNMAP(christmas_flag);
+    // TODO sem_close viacej
     sem_close(semafor_elf);
     sem_unlink("/xgajdo33.semafor_elf");
     sem_unlink("/xgajdo33.semafor_santa");
-    sem_unlink("/xgajdo33.semafor_santa_end");
+    sem_unlink("/xgajdo33.semafor_semafor_reindeer");
     sem_unlink("/xgajdo33.semafor_writing_incrementing");
 
 
@@ -206,21 +269,32 @@ int main(int argc, char *argv[]) {
 
     pid_t santa = fork();
     if (santa == 0) {
-        process_santa();
+        process_santa(arguments_values[1]);
     }
-    for (int i = 1; i < arguments_values[0]; i++) {
-        printf("%d\n", i);
-        if (i % 4 == 0) {
-            sem_post(semafor_santa);
-//                sem_post(semafor_elf);
-//                sem_post(semafor_elf);
-//                sem_post(semafor_elf);
-        }
-        pid_t elf = fork();
-        if (elf == 0) {
-            process_elf(i);
+    pid_t elve_generator = fork();
+    if (elve_generator == 0) {
+        for (int i = 1; i <= arguments_values[0]; i++) {
+            printf("%d\n", i);
+            pid_t elf = fork();
+            if (elf == 0) {
+                process_elf(i, arguments_values[2]);
+            }
         }
     }
+    pid_t reindeer_generator = fork();
+    if(reindeer_generator == 0){
+        for (int i = 1; i <= arguments_values[1]; i++) {
+            pid_t reindeer = fork();
+            if (reindeer == 0) {
+                process_reindeer(i, arguments_values[3], arguments_values[1]);
+            }
+        }
+    }
+    // Waiting until parent process is the only one left
+    int IDs;
+        do{
+            IDs = wait(NULL);
+        } while(IDs != -1);
     clean_up();
     return 0;
 }
