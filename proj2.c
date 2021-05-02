@@ -140,7 +140,12 @@ void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_to
     (*order_of_prints)++;
     sem_post(semafor_writing_incrementing);
 
-    fread(&random_value, sizeof(random_value), 1, random_generator);
+
+    // We read random numbers until we find one that is bigger than TR/2 after applying modulo TR, thanks to which we make sure its in range of <TR/2,TR>
+    // Didnt work, infinite cycle
+    //    do {
+        fread(&random_value, sizeof(random_value), 1, random_generator);
+//    }while((int)(random_value % wait_value) <= (wait_value / 2));
 
     // Generating numbers from range of (upperval - lowerval + 1) + lowerval
     wait_value = (wait_value - (wait_value / 2 + 1)) + wait_value / 2;
