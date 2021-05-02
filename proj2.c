@@ -142,9 +142,10 @@ void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_to
 
     fread(&random_value, sizeof(random_value), 1, random_generator);
 
-    // Generating numbers from range of (upperval - lowerval+1) + lowerval
+    // Generating numbers from range of (upperval - lowerval + 1) + lowerval
+    wait_value = (wait_value - (wait_value / 2 + 1)) + wait_value / 2;
     if(wait_value != 0){
-        usleep(random_value % (wait_value - (wait_value / 2 + 1)) + wait_value / 2);
+        usleep(random_value % wait_value);
     }
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: RD %d: return home\n", *order_of_prints, reindeerID);
