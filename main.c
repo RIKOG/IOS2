@@ -4,19 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include <sys/sem.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <limits.h>
 #include <semaphore.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <time.h>
-
 
 #define MMAP(pointer) {(pointer) = mmap(NULL, sizeof(*(pointer)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);}
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
