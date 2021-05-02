@@ -11,11 +11,8 @@
 
 #define MMAP(pointer) {(pointer) = mmap(NULL, sizeof(*(pointer)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);}
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
-//Todo poviem procesom nech sa zatvoria
 //Todo try catch states where fork didnt get created
 //todo check if rand for reindeers works as expected
-//todo delete printf
-//todo delenie nulov
 int *order_of_prints = NULL;
 int *number_of_elves_waiting = NULL;
 int *number_of_reindeers_waiting = NULL;
@@ -227,12 +224,16 @@ void clean_up() {
     UNMAP(reindeers_ready_flag);
     UNMAP(christmas_flag);
     UNMAP(number_of_elves_working);
-    // TODO sem_close viacej
     sem_close(semafor_elf);
+    sem_close(semafor_santa);
+    sem_close(semafor_reindeer);
+    sem_close(semafor_writing_incrementing);
+    sem_close(semafor_working_shop);
     sem_unlink("/xgajdo33.semafor_elf");
     sem_unlink("/xgajdo33.semafor_santa");
-    sem_unlink("/xgajdo33.semafor_semafor_reindeer");
+    sem_unlink("/xgajdo33.semafor_reindeer");
     sem_unlink("/xgajdo33.semafor_writing_incrementing");
+    sem_unlink("/xgajdo33.semafor_working_shop");
 
 
     if (fclose(fp) == EOF) {
