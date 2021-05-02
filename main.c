@@ -44,9 +44,9 @@ void process_santa(int number_of_reindeers_total) {
 
         sem_wait(semafor_santa);
         // All the reindeers are ready
-        if((*reindeers_ready_flag) == 1){
+        if ((*reindeers_ready_flag) == 1) {
             // We hitch the reindeers
-            for(int i = 0; i < number_of_reindeers_total; i++){
+            for (int i = 0; i < number_of_reindeers_total; i++) {
                 sem_post(semafor_reindeer);
             }
             sem_wait(semafor_writing_incrementing);
@@ -61,7 +61,7 @@ void process_santa(int number_of_reindeers_total) {
         fprintf(fp, "%d: Santa: helping elves\n", *order_of_prints);
         fflush(fp);
         (*order_of_prints)++;
-        (*number_of_elves_waiting)-=3;
+        (*number_of_elves_waiting) -= 3;
         sem_post(semafor_writing_incrementing);
 
         sem_post(semafor_elf);
@@ -79,9 +79,10 @@ void process_elf(int elfID, int wait_value) {
     sem_post(semafor_writing_incrementing);
 
     fread(&random_value, sizeof(random_value), 1, random_generator);
+    // Generating random numbers
     usleep(random_value % wait_value);
 
-    if((*christmas_flag) == 1){
+    if ((*christmas_flag) == 1) {
         sem_wait(semafor_writing_incrementing);
         fprintf(fp, "%d: Elf %d: taking holidays\n", *order_of_prints, elfID);
         fflush(fp);
@@ -96,7 +97,7 @@ void process_elf(int elfID, int wait_value) {
     (*order_of_prints)++;
     (*number_of_elves_waiting)++;
     // Todo uvolnujem troch elfov ale nedaval som ho do poradia ? blbost
-    if((*number_of_elves_waiting) >= 3){
+    if ((*number_of_elves_waiting) >= 3) {
         sem_post(semafor_writing_incrementing);
         sem_post(semafor_santa);
         sem_wait(semafor_elf);
@@ -114,7 +115,7 @@ void process_elf(int elfID, int wait_value) {
 
 }
 
-void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_total){
+void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_total) {
     unsigned int random_value;
     sem_wait(semafor_writing_incrementing);
     fprintf(fp, "%d: RD %d: rstarted\n", *order_of_prints, reindeerID);
@@ -125,11 +126,11 @@ void process_reindeer(int reindeerID, int wait_value, int number_of_reindeers_to
     fread(&random_value, sizeof(random_value), 1, random_generator);
 
     // Generating numbers from range of (upperval - lowerval+1) + lowerval
-    usleep(random_value % (wait_value - (wait_value/2+1))+wait_value/2);
+    usleep(random_value % (wait_value - (wait_value / 2 + 1)) + wait_value / 2);
 
     sem_wait(semafor_writing_incrementing);
     (*number_of_reindeers_waiting)++;
-    if((*number_of_reindeers_waiting) >= number_of_reindeers_total){
+    if ((*number_of_reindeers_waiting) >= number_of_reindeers_total) {
         (*reindeers_ready_flag) = 1;
         sem_post(semafor_santa);
     }
@@ -280,21 +281,24 @@ int main(int argc, char *argv[]) {
                 process_elf(i, arguments_values[2]);
             }
         }
+        exit(0);
     }
     pid_t reindeer_generator = fork();
-    if(reindeer_generator == 0){
+    if (reindeer_generator == 0) {
         for (int i = 1; i <= arguments_values[1]; i++) {
             pid_t reindeer = fork();
             if (reindeer == 0) {
                 process_reindeer(i, arguments_values[3], arguments_values[1]);
             }
         }
+        exit(0);
     }
+
     // Waiting until parent process is the only one left
     int IDs;
-        do{
-            IDs = wait(NULL);
-        } while(IDs != -1);
+    do {
+        IDs = wait(NULL);
+    } while (IDs != -1);
     clean_up();
     return 0;
 }
