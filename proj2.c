@@ -11,7 +11,6 @@
 
 #define MMAP(pointer) {(pointer) = mmap(NULL, sizeof(*(pointer)), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);}
 #define UNMAP(pointer) {munmap((pointer), sizeof((pointer)));}
-//Todo try catch states where fork didnt get created
 
 // Inicialization of global variables
 int *order_of_prints = NULL;
@@ -279,7 +278,7 @@ int check_if_number(char string[]) {
     int number = 0, i = 0;
     // We just check if everything in string is between 9 and 0 chars and in scope of size of our char array
     while (string[i] != '\0') {
-        if ((string[i] <= '9' && string[i] >= '0') || i == 1000) {
+        if (string[i] <= '9' && string[i] >= '0') {
         } else {
             fprintf(stderr, "One of the given arguments is not an integer or has negative value!\n");
             return -1;
