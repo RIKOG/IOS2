@@ -250,8 +250,7 @@ int check_if_number(char string[]) {
     int number = 0, i = 0;
     // We just check if everything in string is between 9 and 0 chars
     while (string[i] != '\0') {
-        // todo add support for +500 and -500.. maybe even support for 5.2 decimals
-        if (string[i] <= '9' && string[i] >= '0') {
+        if ((string[i] <= '9' && string[i] >= '0') || i == 1000) {
         } else {
             fprintf(stderr, "One of the given arguments is not an integer or has negative value!\n");
             return -1;
@@ -269,7 +268,6 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
     (*order_of_prints)++;
-    // Todo what if we get really big argument ?
     char string[1001];
     int flag_if_number = 0, arguments_values[4] = {0};
     // We check whether the number of arguments is correct
