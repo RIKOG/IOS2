@@ -2,7 +2,7 @@
  
 # IOS – projekt 2 (synchronizace)
 Zadání je inspirováno knihou Allen B. Downey: The Little Book of SemaphoresPopis Úlohy (Santa Claus problem)
-
+```
 Santa Claus spí ve své dílně na severním pólu a může být vzbuzen pouze 
 1. ve chvíli, kdy jsou všichni jeho sobi zpět z letní dovolené, nebo
 2. někteří z jeho skřítků mají problém s výrobou hraček a potřebují pomoci. Aby se Santa Claus prospal, skřítci čekají potichu před dílnou. Ve chvíli, kdy čekají alespoň 3, tak první 3 z fronty najednou vstoupí do dílny. Ostatní skřítci, co potřebují pomoci musí čekat před dílnou až bude volno. Ve chvíli, kdy přijde poslední sob z dovolené je pomoc čekajícím skřítkům možné odložit. Santa dává na dveře dílny nápis „Vánoce – zavřeno“ a jde zapřahat soby do saní. Všichni skřítci, co čekají před dílnou ihned odcházejí na dovolenou. Ostatní skřítci odchází na dovolenou ve chvíli, kdy potřebují pomoc od Santy a zjistí, že je dílna zavřená. Podrobná specifikace úlohy
@@ -18,6 +18,8 @@ Implementační detaily:•Každý proces vykonává své akce a současně zapi
 2.Po spuštění vypíše: A: RD rdID: rstarted3.Čas na dovolené modelujte voláním usleep na náhodný interval <TR/2,TR>4.Po návratu z letní dovolené vypíše: A: RD rdID: return homea následně čeká, než ho Santa zapřáhne k saním. Pokud je posledním sobem, který se vrátil z dovolené, tak vzbudí Santu.5.Po zapřažení do saní vypíše: A: RD rdID: get hitcheda následně proces končí.Podmínky vypracováníObecné informace•Projekt implementujte v jazyce C. Komentujte zdrojové kódy, programujte přehledně. Součástíhodnocení bude i kvalita zdrojového kódu.•Kontrolujte, zda se všechny procesy ukončují korektně a zda při ukončování správně uvolňujetevšechny alokované zdroje.•Dodržujte syntax zadaných jmen, formát souborů a formát výstupních dat. Použijte základnískript pro ověření korektnosti výstupního formátu (dostupný z webu se zadáním). •Dotazy k zadání: Veškeré nejasnosti a dotazy řešte pouze prostřednictvím diskuzního fóra kprojektu 2.•Poznámka k testování: Můžete si nasimulovat častější přepínání procesů například vložením krátkého uspání po uvolnění semaforů apod. Pouze pro testovací účely, do finálního řešení nevkládejte!Překlad•Pro překlad používejte nástroj make. Součástí odevzdání bude soubor Makefile.•Překlad se provede příkazem make v adresáři, kde je umístěn soubor Makefile.•Po překladu vznikne spustitelný soubor se jménem proj2, který bude umístěn ve stejném adresáři jako soubor Makefile•Zdrojové kódy překládejte s přepínači -std=gnu99 -Wall -Wextra -Werror -pedantic•Pokud to vaše řešení vyžaduje, lze přidat další přepínače pro linker (např. kvůli semaforům čisdílené paměti, -pthread, -lrt , . . . ).•Vaše řešení musí být možné přeložit a spustit na serveru merlin.Odevzdání•Součástí odevzdání budou pouze soubory se zdrojovými kódy (*. , *.h ) a soubor Makefile.Tyto soubory zabalte pomocí nástroje zip do archivu s názvem proj2.zip.•Archiv vytvořte tak, aby po rozbalení byl soubor Makefile umístěn ve stejném adresáři, jako jearchiv.•Archiv proj2.zip odevzdejte prostřednictvím informačního systému—termín Projekt 2.•Pokud nebude dodržena forma odevzdání nebo projekt nepůjde přeložit, bude projekt hodnocen0 body.•Archiv odevzdejte pomocí informačního systému v dostatečném předstihu (odevzdaný soubormůžete před vypršením termínu snadno nahradit jeho novější verzí, kdykoliv budete potřebovat).
 Příklad výstupuPříklad výstupního souboru proj2.out pro následující příkaz:$ ./proj2 5 4 100 100
 -----------------------------
+```
+
 ```
 1: Elf 1: started
 2: Elf 2: started
