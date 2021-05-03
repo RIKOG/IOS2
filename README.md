@@ -19,18 +19,51 @@ Implementační detaily:•Každý proces vykonává své akce a současně zapi
 Příklad výstupuPříklad výstupního souboru proj2.out pro následující příkaz:$ ./proj2 5 4 100 100
 -----------------------------
 ```
-1: Elf 
-1: started
-2: Elf 
-2: started
-3: Elf 
-1: need help
+1: Elf 1: started
+2: Elf 2: started
+3: Elf 1: need help
 4: Santa: going to sleep
 5: RD 
 1: rstarted
-6: Elf 
-2: need help
-7: Elf 
-3: started
-8: RD 4: rstarted9: Elf 4: started10: Elf 5: started11: RD 3: rstarted12: RD 3: return home13: Elf 5: need help14: RD 2: rstarted15: Santa: helping elves16: Elf 2: get help17: Elf 5: get help18: RD 1: return home19: Elf 1: get help20: Santa: going to sleep21: Elf 4: need help22: Elf 5: need help23: Elf 1: need help24: Elf 2: need help25: Santa: helping elves26: Elf 1: get help27: Elf 4: get help28: Elf 5: get help29: Santa: going to sleep30: RD 2: return home31: RD 4: return home32: Santa: closing workshop33: RD 1: get hitched34: Elf 2: taking holidays35: RD 3: get hitched36: Elf 1: need help37: Elf 1: taking holidays38: RD 2: get hitched39: RD 4: get hitched40: Santa: Christmas started41: Elf 4: need help42: Elf 5: need help43: Elf 5: taking holidays44: Elf 3: need help45: Elf 4: taking holidays46: Elf 3: taking holidays
+6: Elf 2: need help
+7: Elf 3: started
+8: RD 4: rstarted
+9: Elf 4: started
+10: Elf 5: started
+11: RD 3: rstarted
+12: RD 3: return home
+13: Elf 5: need help
+14: RD 2: rstarted
+15: Santa: helping elves
+16: Elf 2: get help
+17: Elf 5: get help
+18: RD 1: return home
+19: Elf 1: get help
+20: Santa: going to sleep
+21: Elf 4: need help
+22: Elf 5: need help
+23: Elf 1: need help
+24: Elf 2: need help
+25: Santa: helping elves
+26: Elf 1: get help
+27: Elf 4: get help
+28: Elf 5: get help
+29: Santa: going to sleep
+30: RD 2: return home
+31: RD 4: return home
+32: Santa: closing workshop
+33: RD 1: get hitched
+34: Elf 2: taking holidays
+35: RD 3: get hitched
+36: Elf 1: need help
+37: Elf 1: taking holidays
+38: RD 2: get hitched
+39: RD 4: get hitched
+40: Santa: Christmas started
+41: Elf 4: need help
+42: Elf 5: need help
+43: Elf 5: taking holidays
+44: Elf 3: need help
+45: Elf 4: taking holidays
+46: Elf 3: taking holidays
 ```
